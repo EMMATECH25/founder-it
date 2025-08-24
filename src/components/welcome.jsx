@@ -28,12 +28,14 @@ const Welcome = () => {
       const data = await res.json();
 
       if (res.ok && data.token) {
-        token = data.token;
-        localStorage.setItem("token", token);
-        setMessage("✅ Payment verified. Redirecting...");
-        setTimeout(() => navigate("/dashboard"), 1500);
-        return;
-      }
+  token = data.token;
+  localStorage.setItem("token", token);
+  setMessage("✅ Payment verified. Redirecting...");
+  setTimeout(() => {
+    window.location.href = "https://founderfit.netlify.app/welcome";
+  }, 1500);
+  return;
+}
     } catch (err) {
       console.error(`Attempt ${attempts + 1} failed:`, err);
     }
