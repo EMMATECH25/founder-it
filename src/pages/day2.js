@@ -19,32 +19,42 @@ const Day2 = () => {
   const handlePrev = () => navigate("/day1-part1");
 
   const handleNext = async () => {
-    const payload = questionRef.current.validateAndBuildPayload();
-    if (!payload) return; // validation failed, stop
+  const payload = questionRef.current.validateAndBuildPayload();
+  if (!payload) return; // validation failed, stop
 
-    try {
-      const token = localStorage.getItem("token");
+  // 🔹 Re-map keys to match backend
+  const backendPayload = {
+    selection_criteria: payload.selectionCriteria,
+    location: payload.location,
+    scalability: payload.scalability,
+    risk_tolerance: payload.riskTolerance,
+    time_commitment: payload.timeCommitment,
+  };
 
-      const res = await fetch("https://founderfit-backend.onrender.com/api/day2/save", {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await fetch(
+      "https://founderfit-backend.onrender.com/api/day2/save",
+      {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        throw new Error(`Server responded with ${res.status}`);
+        body: JSON.stringify(backendPayload),
       }
+    );
 
-      message.success("Responses saved successfully!");
-      navigate("/day3-16");
-    } catch (err) {
-      console.error("❌ Failed to save Day2 responses:", err);
-      message.error("Failed to save your responses. Try again.");
-    }
-  };
+    if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+    message.success("Responses saved successfully!");
+    navigate("/day3-16");
+  } catch (err) {
+    console.error("❌ Failed to save Day2 responses:", err);
+    message.error("Failed to save your responses. Try again.");
+  }
+};
+
 
   return (
     <div>

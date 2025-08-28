@@ -11,9 +11,8 @@ const QuestionWithOptions = forwardRef((props, ref) => {
   const [scalability, setScalability] = useState([]);
   const [riskTolerance, setRiskTolerance] = useState([]);
   const [timeCommitment, setTimeCommitment] = useState([]);
-  const [investment, setInvestment] = useState([]);
 
-  // Limit 2 selections for first section
+  // ✅ Limit 2 selections for first section
   const handleSelectionCriteriaChange = (values) => {
     if (values.length > 2) {
       message.error("You can only select 2 options in this section.");
@@ -23,7 +22,7 @@ const QuestionWithOptions = forwardRef((props, ref) => {
     if (!values.includes("Other")) setCustomOther("");
   };
 
-  // Limit 1 selection for all other sections
+  // ✅ Limit 1 selection for all other sections
   const handleSingleSelect = (setter) => (values) => {
     if (values.length > 1) {
       message.error("You can only select 1 option here.");
@@ -32,7 +31,7 @@ const QuestionWithOptions = forwardRef((props, ref) => {
     setter(values);
   };
 
-  // Expose validation + payload to parent
+  // ✅ Expose validation + payload to parent
   useImperativeHandle(ref, () => ({
     validateAndBuildPayload() {
       if (selectionCriteria.length !== 2) {
@@ -43,8 +42,7 @@ const QuestionWithOptions = forwardRef((props, ref) => {
         !location.length ||
         !scalability.length ||
         !riskTolerance.length ||
-        !timeCommitment.length ||
-        !investment.length
+        !timeCommitment.length
       ) {
         message.error("Please select 1 option in each section.");
         return null;
@@ -58,7 +56,6 @@ const QuestionWithOptions = forwardRef((props, ref) => {
         scalability: scalability[0],
         riskTolerance: riskTolerance[0],
         timeCommitment: timeCommitment[0],
-        investment: investment[0],
       };
     },
   }));
@@ -152,23 +149,6 @@ const QuestionWithOptions = forwardRef((props, ref) => {
             <Checkbox value="Part time">Part time</Checkbox>
             <Checkbox value="Evenings/Weekends">Evening/weekends</Checkbox>
             <Checkbox value="Adhoc">Adhoc</Checkbox>
-          </div>
-        </Checkbox.Group>
-      </div>
-
-      {/* ✅ Section 6 */}
-      <div className={style.checkBoxText}>
-        <h3>Money to be invested</h3>
-        <Checkbox.Group
-          style={{ width: "100%" }}
-          onChange={handleSingleSelect(setInvestment)}
-          value={investment}
-        >
-          <div className={style.blockCheck}>
-            <Checkbox value="No money">No money</Checkbox>
-            <Checkbox value="Some money">Some money</Checkbox>
-            <Checkbox value="Other people's money">Other people's money</Checkbox>
-            <Checkbox value="Self-funded">Self-funded</Checkbox>
           </div>
         </Checkbox.Group>
       </div>
