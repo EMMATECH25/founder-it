@@ -1,7 +1,6 @@
 // pages/Day2.js
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { message } from "antd";
 import TopNav from "../components/top-nav";
 import QuestionWithOptions from "../components/questionwithoptions";
@@ -13,51 +12,39 @@ import style from "../styles/day2.module.css";
 import Footer from "../components/footer";
 import ButtonNextPre from "../components/button-next-pre";
 
-// 🔹 Backend API root
-const API_BASE = "https://founderfit-backend.onrender.com/api";
-
 const Day2 = () => {
   const navigate = useNavigate();
   const questionRef = useRef();
-  const [initialData, setInitialData] = useState(null);
 
   const handlePrev = () => navigate("/day1-part1");
 
   const handleNext = async () => {
     const payload = questionRef.current.validateAndBuildPayload();
-    if (!payload) return; // stop if validation failed
+    if (!payload) return; // validation failed, stop
 
     try {
       const token = localStorage.getItem("token");
-      await axios.post(`${API_BASE}/day2/save`, payload, {
-        headers: { Authorization: `Bearer ${token}` },
+
+      const res = await fetch("https://founderfit-backend.onrender.com/api/day2/save", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
       });
 
-      message.success("✅ Responses saved successfully!");
+      if (!res.ok) {
+        throw new Error(`Server responded with ${res.status}`);
+      }
+
+      message.success("Responses saved successfully!");
       navigate("/day3-16");
     } catch (err) {
       console.error("❌ Failed to save Day2 responses:", err);
       message.error("Failed to save your responses. Try again.");
     }
   };
-
-  // 🔹 Fetch existing responses on mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem("token");
-        const res = await axios.get(`${API_BASE}/day2/get`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (res.data) {
-          setInitialData(res.data);
-        }
-      } catch (err) {
-        console.warn("⚠️ No previous Day2 data found or failed to load:", err);
-      }
-    };
-    fetchData();
-  }, []);
 
   return (
     <div>
@@ -85,8 +72,8 @@ const Day2 = () => {
 
       <TableTitle subtitle="Table 3" title="Defining selection criteria" />
 
-      {/* ✅ Pass ref + prefill data */}
-      <QuestionWithOptions ref={questionRef} initialData={initialData} />
+      {/* ✅ Pass ref so we can validate on Next */}
+      <QuestionWithOptions ref={questionRef} />
 
       <div className={style.btnContainer}>
         <ButtonNextPre
