@@ -1,5 +1,8 @@
-import React from "react";
+// pages/Day2.js
+import React, { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
+import { message } from "antd";
 import TopNav from "../components/top-nav";
 import QuestionWithOptions from "../components/questionwithoptions";
 import TableTitle from "../components/day1/table-title";
@@ -10,11 +13,51 @@ import style from "../styles/day2.module.css";
 import Footer from "../components/footer";
 import ButtonNextPre from "../components/button-next-pre";
 
+// 🔹 Backend API root
+const API_BASE = "https://founderfit-backend.onrender.com/api";
+
 const Day2 = () => {
-  const navigate = useNavigate(); // <-- Initialize navigate here
+  const navigate = useNavigate();
+  const questionRef = useRef();
+  const [initialData, setInitialData] = useState(null);
 
   const handlePrev = () => navigate("/day1-part1");
-  const handleNext = () => navigate("/day3-16");
+
+  const handleNext = async () => {
+    const payload = questionRef.current.validateAndBuildPayload();
+    if (!payload) return; // stop if validation failed
+
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`${API_BASE}/day2/save`, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      message.success("✅ Responses saved successfully!");
+      navigate("/day3-16");
+    } catch (err) {
+      console.error("❌ Failed to save Day2 responses:", err);
+      message.error("Failed to save your responses. Try again.");
+    }
+  };
+
+  // 🔹 Fetch existing responses on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`${API_BASE}/day2/get`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.data) {
+          setInitialData(res.data);
+        }
+      } catch (err) {
+        console.warn("⚠️ No previous Day2 data found or failed to load:", err);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <div>
@@ -40,13 +83,10 @@ const Day2 = () => {
         <button>Sample of a filled out form</button>
       </div>
 
-      <TableTitle
-        TableTitle
-        subtitle="Table 3"
-        title="Defining selection criteria"
-      />
+      <TableTitle subtitle="Table 3" title="Defining selection criteria" />
 
-      <QuestionWithOptions />
+      {/* ✅ Pass ref + prefill data */}
+      <QuestionWithOptions ref={questionRef} initialData={initialData} />
 
       <div className={style.btnContainer}>
         <ButtonNextPre
