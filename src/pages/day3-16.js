@@ -1,4 +1,7 @@
-import React from "react";
+// pages/Day316.js
+import React, { useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { message } from "antd";
 import TopNav from "../components/top-nav";
 import TableBanner from "../components/activity-index/table-baner";
 import Vid from "../assets/vid.png";
@@ -7,7 +10,42 @@ import InstructionSteps from "../components/instruction-step";
 import TableTitle from "../components/day1/table-title";
 import IdeaTableList from "../components/ideaslist-table";
 import Footer from "../components/footer";
+import ButtonNextPre from "../components/button-next-pre";
+
 const Day316 = () => {
+  const navigate = useNavigate();
+  const ideaTableRef = useRef();
+
+  const handlePrev = () => navigate("/day2");
+
+  const handleNext = async () => {
+    const payload = ideaTableRef.current.validateAndBuildPayload();
+    if (!payload) return; // validation failed
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        "https://founderfit-backend.onrender.com/api/day3/save",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) throw new Error(`Server responded with ${response.status}`);
+
+      message.success("Day3–16 responses saved successfully!");
+      navigate("/day17-25");
+    } catch (err) {
+      console.error("❌ Failed to save Day3–16 responses:", err);
+      message.error("Failed to save your responses. Try again.");
+    }
+  };
+
   return (
     <div>
       <TopNav />
@@ -40,9 +78,19 @@ const Day316 = () => {
         </div>
       </div>
 
-      <TableTitle subtitle="Table 4" title="LISTING IDEAS AND EVAULATION" />
+      <TableTitle subtitle="Table 4" title="LISTING IDEAS AND EVALUATION" />
 
-      <IdeaTableList />
+      {/* ✅ Pass ref so parent can validate/save */}
+      <IdeaTableList ref={ideaTableRef} />
+
+      <div className={style.btnContainer}>
+        <ButtonNextPre
+          buttons={[
+            { label: "PREVIOUS", onClick: handlePrev },
+            { label: "NEXT", onClick: handleNext },
+          ]}
+        />
+      </div>
 
       <Footer />
     </div>

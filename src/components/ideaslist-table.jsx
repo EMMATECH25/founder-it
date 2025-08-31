@@ -1,84 +1,106 @@
-import { useState } from "react";
-import { Table, InputNumber } from "antd";
+import React, { useState, forwardRef, useImperativeHandle } from "react";
+import { Table, Input, InputNumber, message } from "antd";
 import style from "../styles/idea-table-list.module.css";
 
-const data = [
-  {
-    key: "1",
-    day: "Fleet Tracker for small delivery businesses as you want to know where trucks/buses/bikes are 24/7",
-    solution: "Low-cost GPS + dashboard to track truck/bus/bike fleets",
-  },
-  {
-    key: "2",
-    day: "Try Before You Fly is needed to virtually see the hotel rooms you might want to rent so it does not upset your vacation",
-    solution:
-      "Platform that aggregates 3D hotel room walkthroughs with realtime availability to avoid “buying” wrong rooms",
-  },
-  {
-    key: "3",
-    day: "People need short-term storage facilities when they are between rental properties, or their new place cannot accommodate everything they have",
-    solution:
-      "Acquire or build a small local self-storage facility, and improve operations via software and more responsive customer service",
-  },
-  {
-    key: "4",
-    day: "Vertical job board for climate-tech roles because these jobs are difficult to find and aggregate",
-    solution:
-      "Curated listings, hiring support, and candidate communities focused on climate startups via a website",
-  },
-  {
-    key: "5",
-    day: "Hotels remain expensive and subpar when you take a vacation as a family, especially in new countries",
-    solution:
-      "Buy and/or build out a portfolio of rental units to accommodate travelers that want a “home away from home”",
-  },
-];
+const IdeaTableList = forwardRef((props, ref) => {
+  // Initialize with 5 empty rows
+  const [rows, setRows] = useState(
+    Array.from({ length: 5 }, (_, i) => ({
+      key: (i + 1).toString(),
+      idea: "",
+      solution: "",
+      score: null,
+    }))
+  );
 
-const IdeaTableList = () => {
-  const [interestLevels, setInterestLevels] = useState({});
-
-  const handleInterestChange = (key, value) => {
-    setInterestLevels((prev) => ({
-      ...prev,
-      [key]: value || 0,
-    }));
+  const handleChange = (key, field, value) => {
+    setRows((prev) =>
+      prev.map((row) =>
+        row.key === key ? { ...row, [field]: value } : row
+      )
+    );
   };
+
+  // Expose validation + payload builder
+  useImperativeHandle(ref, () => ({
+    validateAndBuildPayload() {
+      // Must have at least one complete row
+      const filledRows = rows.filter(
+        (r) => r.idea.trim() && r.solution.trim() && r.score
+      );
+
+      if (filledRows.length === 0) {
+        message.error("Please fill at least one idea, solution, and score.");
+        return null;
+      }
+
+      // Validate that if user starts filling, they must complete the row
+      for (const r of rows) {
+        if ((r.idea || r.solution || r.score) && !(r.idea && r.solution && r.score)) {
+          message.error("All fields in a row must be filled if you start it.");
+          return null;
+        }
+      }
+
+      // Return payload for backend
+      return {
+        ideas: filledRows.map((r) => ({
+          idea: r.idea,
+          solution: r.solution,
+          score: r.score,
+        })),
+      };
+    },
+  }));
 
   const columns = [
     {
-      title: "IDEA/PROBLEM",
-      dataIndex: "day",
+      title: "IDEA / PROBLEM",
+      dataIndex: "idea",
+      render: (_, record) => (
+        <Input
+          value={record.idea}
+          onChange={(e) => handleChange(record.key, "idea", e.target.value)}
+          placeholder="Enter idea/problem"
+        />
+      ),
     },
     {
       title: "SOLUTION",
       dataIndex: "solution",
+      render: (_, record) => (
+        <Input
+          value={record.solution}
+          onChange={(e) => handleChange(record.key, "solution", e.target.value)}
+          placeholder="Enter solution"
+        />
+      ),
     },
     {
-      title: "RATE YOUR LEVEL OF INTEREST IN THIS IDEA (1-10: 10 IS HIGH)",
-      key: "interest",
+      title: "RATE YOUR INTEREST (1-10)",
+      dataIndex: "score",
       align: "center",
       render: (_, record) => (
         <InputNumber
           min={1}
           max={10}
-          value={interestLevels[record.key]}
-          onChange={(value) => handleInterestChange(record.key, value)}
+          value={record.score}
+          onChange={(val) => handleChange(record.key, "score", val)}
         />
       ),
     },
   ];
 
   return (
-    <div>
-      <div className={style.container}>
-        <Table
-          columns={columns}
-          dataSource={data}
-          pagination={false}
-          rowKey="key"
-        />
-      </div>
+    <div className={style.container}>
+      <Table
+        columns={columns}
+        dataSource={rows}
+        pagination={false}
+        rowKey="key"
+      />
     </div>
   );
-};
+});
+
 export default IdeaTableList;
