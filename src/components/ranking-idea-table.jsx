@@ -18,8 +18,8 @@ const RankinkIdeaList = () => {
         if (!res.ok) throw new Error(`Server responded with ${res.status}`);
         const data = await res.json();
 
-        // ✅ backend sends ideas as JSON array
-        setIdeas(data.data?.ideas || []);
+        // ✅ backend now returns { data: [ ... ] }
+        setIdeas(data.data || []);
       } catch (err) {
         console.error("❌ Failed to fetch ideas:", err);
         message.error("Failed to load your saved ideas.");
