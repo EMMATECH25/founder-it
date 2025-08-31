@@ -1,84 +1,60 @@
-import { useState } from "react";
-import { Table, InputNumber } from "antd";
+import React, { useEffect, useState } from "react";
+import { Table, message } from "antd";
 import style from "../styles/idea-table-list.module.css";
 
-const data = [
-  {
-    key: "1",
-    day: "Hotels remain expensive and subpar when you take a vacation as a family, especially in new countries",
-    solution: "Buy and/or build out a portfolio of rental units to accommodate travelers that want a “home away from home”",
-  },
-  {
-    key: "2",
-    day:"People need short-term storage facilities when they are between rental properties, or their new place cannot accommodate everything they have",
-    solution:
-      "Acquire or build a small local self-storage facility, and improve operations via software and more responsive customer service",
-  },
-  {
-    key: "3",
-    day: "Try Before You Fly is needed to virtually see the hotel rooms you might want to rent so it does not upset your vacation",
-    solution:
-      "Platform that aggregates 3D hotel room walkthroughs with realtime availability to avoid “buying” wrong rooms",
-  },
-  {
-    key: "4",
-    day: "Vertical job board for climate-tech roles because these jobs are difficult to find and aggregate",
-    solution:
-      "Curated listings, hiring support, and candidate communities focused on climate startups via a website",
-  },
-  {
-    key: "5",
-    day: "Fleet Tracker for small delivery businesses as you want to know where trucks/buses/bikes are 24/7",
-    solution:
-      "Low-cost GPS + dashboard to track truck/bus/bike fleets",
-  },
-];
-
 const RankinkIdeaList = () => {
-  const [interestLevels, setInterestLevels] = useState({});
+  const [ideas, setIdeas] = useState([]);
 
-  const handleInterestChange = (key, value) => {
-    setInterestLevels((prev) => ({
-      ...prev,
-      [key]: value || 0,
-    }));
-  };
+  useEffect(() => {
+    const fetchIdeas = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(
+          "https://founderfit-backend.onrender.com/api/day3/get",
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+        const data = await res.json();
+
+        // ✅ backend sends ideas as JSON array
+        setIdeas(data.data?.ideas || []);
+      } catch (err) {
+        console.error("❌ Failed to fetch ideas:", err);
+        message.error("Failed to load your saved ideas.");
+      }
+    };
+
+    fetchIdeas();
+  }, []);
 
   const columns = [
     {
       title: "IDEA/PROBLEM",
-      dataIndex: "day",
+      dataIndex: "idea",
     },
     {
       title: "SOLUTION",
       dataIndex: "solution",
     },
     {
-      title: "RATE YOUR LEVEL OF INTEREST IN THIS IDEA (1-10: 10 IS HIGH)",
-      key: "interest",
+      title: "INTEREST SCORE",
+      dataIndex: "score",
       align: "center",
-      render: (_, record) => (
-        <InputNumber
-          min={1}
-          max={10}
-          value={interestLevels[record.key]}
-          onChange={(value) => handleInterestChange(record.key, value)}
-        />
-      ),
     },
   ];
 
   return (
-    <div>
-      <div className={style.container}>
-        <Table
-          columns={columns}
-          dataSource={data}
-          pagination={false}
-          rowKey="key"
-        />
-      </div>
+    <div className={style.container}>
+      <Table
+        columns={columns}
+        dataSource={ideas.map((item, index) => ({ ...item, key: index }))}
+        pagination={false}
+        rowKey="key"
+      />
     </div>
   );
 };
+
 export default RankinkIdeaList;
